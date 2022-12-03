@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import aiMove from "../aiMove";
 
 // these styles must be imported somewhere
-import { useRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { checkAtom, destsAtom, fenAtom, levelAtom } from "../state";
 
 const gameClient = new Chess();
@@ -32,7 +32,7 @@ export default function Chessboard() {
   const [dests, setDests] = useRecoilState(destsAtom);
   const [check, setCheck] = useRecoilState(checkAtom);
 
-  const [level, setLevel] = useRecoilState(levelAtom);
+  const level = useRecoilValue(levelAtom);
 
   const toColor = (gameClient: Chess) => {
     return gameClient.turn() === "w" ? "white" : "black";
@@ -83,7 +83,7 @@ export default function Chessboard() {
             color: toColor(gameClient),
             free: false,
             showDests: true,
-            dests,
+            dests: dests || fetchDests(gameClient),
           },
           fen,
         }}

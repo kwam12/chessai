@@ -7,9 +7,9 @@ export const fenAtom = atom<string>({
   default: "",
 });
 
-export const destsAtom = atom<Map<Key, Key[]>>({
+export const destsAtom = atom<Map<Key, Key[]> | null>({
   key: "destsAtom",
-  default: new Map(),
+  default: null,
 });
 
 export const checkAtom = atom<boolean>({
