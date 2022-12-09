@@ -8,7 +8,7 @@ import { levelAtom, playingAsAtom, playingAtom } from "../state";
 import { StartGameData } from "../utils.types";
 import { gameClient } from "./Chessboard";
 
-const socket = io(BASE_URL);
+export const socket = io(BASE_URL);
 
 export default function ControlPanel() {
   const [_, setLevel] = useRecoilState(levelAtom);

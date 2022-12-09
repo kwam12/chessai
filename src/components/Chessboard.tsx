@@ -7,6 +7,8 @@ import aiMove from "../aiMove";
 // these styles must be imported somewhere
 import { useRecoilState, useRecoilValue } from "recoil";
 import { checkAtom, destsAtom, fenAtom, levelAtom, playingAsAtom } from "../state";
+import { Socket } from "socket.io-client";
+import { socket } from "./ControlPanel";
 
 export const gameClient = new Chess();
 
@@ -48,25 +50,32 @@ export default function Chessboard() {
     setCheck(gameClient.inCheck());
     setDests(fetchDests(gameClient));
 
-    if (gameClient.turn()) {
-      const makeAiMove = () =>
-        aiMove(gameClient.fen(), level).then((move) => {
-          const [[from, to]] = Object.entries(move);
-          console.log(from, to);
-          console.log(gameClient.move({ from: from.toLowerCase(), to: to.toLowerCase() }));
+    // if (gameClient.turn()) {
+    //   const makeAiMove = () =>
+    //     aiMove(gameClient.fen(), level).then((move) => {
+    //       const [[from, to]] = Object.entries(move);
+    //       console.log(from, to);
+    //       console.log(gameClient.move({ from: from.toLowerCase(), to: to.toLowerCase() }));
 
-          setFen(gameClient.fen());
-          setCheck(gameClient.inCheck());
-          setDests(fetchDests(gameClient));
-        });
+    //       setFen(gameClient.fen());
+    //       setCheck(gameClient.inCheck());
+    //       setDests(fetchDests(gameClient));
+    //     });
 
-      setTimeout(makeAiMove, 1000);
-    }
+    //   setTimeout(makeAiMove, 1000);
+    // }
+
+    socket.emit("move", { from, to });
   };
 
   useEffect(() => {
-    // add event listener for change in realtime database here
-    // on new doc, update fen
+    socket.on("move", ({ from, to }) => {
+      gameClient.move({ from, to });
+
+      setFen(gameClient.fen());
+      setCheck(gameClient.inCheck());
+      setDests(fetchDests(gameClient));
+    });
   }, []);
 
   return (
