@@ -21,3 +21,13 @@ export const levelAtom = atom<PossibleGameLevel>({
   key: "levelAtom",
   default: 1,
 });
+
+export const playingAtom = atom<"online" | "ai" | "searching">({
+  key: "playingAtom",
+  default: "ai",
+});
+
+export const playingAsAtom = atom<"white" | "black">({
+  key: "playingAsAtom",
+  default: "white",
+});

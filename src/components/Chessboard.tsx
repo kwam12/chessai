@@ -1,4 +1,4 @@
-import { Chess, SQUARES } from "chess.js";
+import { Chess, Move, SQUARES } from "chess.js";
 import Chessground from "@react-chess/chessground";
 import { Key } from "../chessground-primitives";
 import { useEffect } from "react";
@@ -6,9 +6,9 @@ import aiMove from "../aiMove";
 
 // these styles must be imported somewhere
 import { useRecoilState, useRecoilValue } from "recoil";
-import { checkAtom, destsAtom, fenAtom, levelAtom } from "../state";
+import { checkAtom, destsAtom, fenAtom, levelAtom, playingAsAtom } from "../state";
 
-const gameClient = new Chess();
+export const gameClient = new Chess();
 
 const fetchDests = (gameClient: Chess) => {
   const dests = new Map();
@@ -31,6 +31,7 @@ export default function Chessboard() {
   const [fen, setFen] = useRecoilState(fenAtom);
   const [dests, setDests] = useRecoilState(destsAtom);
   const [check, setCheck] = useRecoilState(checkAtom);
+  const [playingAs, setPlayingAs] = useRecoilState(playingAsAtom);
 
   const level = useRecoilValue(levelAtom);
 
@@ -68,19 +69,21 @@ export default function Chessboard() {
     // on new doc, update fen
   }, []);
 
-  const turnColor = toColor(gameClient);
-
   return (
     <section className="flex justify-center items-center px-10 flex-shrink-0">
       <Chessground
         config={{
-          turnColor,
+          turnColor: toColor(gameClient),
           check,
+          orientation: playingAs,
+          premovable: {
+            enabled: false,
+          },
           events: {
             move: pieceMoved,
           },
           movable: {
-            color: toColor(gameClient),
+            color: playingAs,
             free: false,
             showDests: true,
             dests: dests || fetchDests(gameClient),
