@@ -6,7 +6,7 @@ import aiMove from "../aiMove";
 
 // these styles must be imported somewhere
 import { useRecoilState, useRecoilValue } from "recoil";
-import { checkAtom, destsAtom, fenAtom, levelAtom, playingAsAtom } from "../state";
+import { checkAtom, destsAtom, fenAtom, levelAtom, playingAsAtom, playingAtom } from "../state";
 import { Socket } from "socket.io-client";
 import { socket } from "./ControlPanel";
 
@@ -34,12 +34,24 @@ export default function Chessboard() {
   const [dests, setDests] = useRecoilState(destsAtom);
   const [check, setCheck] = useRecoilState(checkAtom);
   const [playingAs, setPlayingAs] = useRecoilState(playingAsAtom);
+  const [playing, setPlaying] = useRecoilState(playingAtom);
 
   const level = useRecoilValue(levelAtom);
 
   const toColor = (gameClient: Chess) => {
     return gameClient.turn() === "w" ? "white" : "black";
   };
+
+  const makeAiMove = () =>
+    aiMove(gameClient.fen(), level).then((move) => {
+      const [[from, to]] = Object.entries(move);
+      console.log(from, to);
+      console.log(gameClient.move({ from: from.toLowerCase(), to: to.toLowerCase() }));
+
+      setFen(gameClient.fen());
+      setCheck(gameClient.inCheck());
+      setDests(fetchDests(gameClient));
+    });
 
   const pieceMoved = (from: Key, to: Key, _: any) => {
     gameClient.move({ from, to });
@@ -50,22 +62,8 @@ export default function Chessboard() {
     setCheck(gameClient.inCheck());
     setDests(fetchDests(gameClient));
 
-    // if (gameClient.turn()) {
-    //   const makeAiMove = () =>
-    //     aiMove(gameClient.fen(), level).then((move) => {
-    //       const [[from, to]] = Object.entries(move);
-    //       console.log(from, to);
-    //       console.log(gameClient.move({ from: from.toLowerCase(), to: to.toLowerCase() }));
-
-    //       setFen(gameClient.fen());
-    //       setCheck(gameClient.inCheck());
-    //       setDests(fetchDests(gameClient));
-    //     });
-
-    //   setTimeout(makeAiMove, 1000);
-    // }
-
-    socket.emit("move", { from, to });
+    if (playing === "online") socket.emit("move", { from, to });
+    else setTimeout(makeAiMove, 1000);
   };
 
   useEffect(() => {
@@ -77,6 +75,8 @@ export default function Chessboard() {
       setDests(fetchDests(gameClient));
     });
   }, []);
+
+  console.log(playing);
 
   return (
     <section className="flex justify-center items-center px-10 flex-shrink-0">

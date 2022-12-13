@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { PossibleGameLevel } from "../aiMove";
 import { BASE_URL } from "../config";
-import { levelAtom, playingAsAtom, playingAtom } from "../state";
+import { fenAtom, levelAtom, playingAsAtom, playingAtom } from "../state";
 import { StartGameData } from "../utils.types";
 import { gameClient } from "./Chessboard";
 
@@ -14,6 +14,7 @@ export default function ControlPanel() {
   const [_, setLevel] = useRecoilState(levelAtom);
 
   const [playing, setPlayingState] = useRecoilState(playingAtom);
+  const setFen = useSetRecoilState(fenAtom);
   const setPlayingAs = useSetRecoilState(playingAsAtom);
 
   const playOnline = async () => {
@@ -29,6 +30,7 @@ export default function ControlPanel() {
       window.history.pushState({}, "", `/${roomId}`);
       gameClient.reset();
 
+      setFen(gameClient.fen());
       setPlayingState("online");
       setPlayingAs(members.find((member) => member.id === socket.id)?.isWhite ? "white" : "black");
 
