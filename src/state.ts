@@ -1,3 +1,4 @@
+import { User } from "@supabase/supabase-js";
 import { atom } from "recoil";
 import { PossibleGameLevel } from "./aiMove";
 import { Key } from "./chessground-primitives";
@@ -30,4 +31,14 @@ export const playingAtom = atom<"online" | "ai" | "searching">({
 export const playingAsAtom = atom<"white" | "black">({
   key: "playingAsAtom",
   default: "white",
+});
+
+export const userAtom = atom<User | null>({
+  key: "userAtom",
+  default: null,
+});
+
+export const otherUserAtom = atom<User | null>({
+  key: "otherUserAtom",
+  default: null,
 });

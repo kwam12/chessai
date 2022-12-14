@@ -1,10 +1,13 @@
+import { Button, Typography } from "@mui/material";
+import { User } from "@supabase/supabase-js";
 import { useEffect } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { io } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { PossibleGameLevel } from "../aiMove";
 import { BASE_URL } from "../config";
-import { fenAtom, levelAtom, playingAsAtom, playingAtom } from "../state";
+import { fenAtom, levelAtom, otherUserAtom, playingAsAtom, playingAtom, userAtom } from "../state";
+import supabase from "../supabase";
 import { StartGameData } from "../utils.types";
 import { gameClient } from "./Chessboard";
 
@@ -14,13 +17,31 @@ export default function ControlPanel() {
   const [_, setLevel] = useRecoilState(levelAtom);
 
   const [playing, setPlayingState] = useRecoilState(playingAtom);
+  const [user, setUser] = useRecoilState(userAtom);
+  const [otherUser, setOtherUser] = useRecoilState(otherUserAtom);
+
   const setFen = useSetRecoilState(fenAtom);
   const setPlayingAs = useSetRecoilState(playingAsAtom);
 
+  const signInWithGoogle = async () => {
+    // use supabase for signin
+    const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+
+    if (error) {
+      console.log(error);
+    }
+
+    if (data) {
+      console.log("DATA", data);
+    }
+  };
+
   const playOnline = async () => {
+    if (!user) return;
+
     setPlayingState("searching");
 
-    socket.emit("play");
+    socket.emit("play", { avatar_url: user.user_metadata.avatar_url, name: user.user_metadata.full_name });
 
     socket.on("created_room", (roomId: string) => {
       console.log("CREATED ROOM", roomId, "NOW LOOKING FOR A PLAYER");
@@ -35,18 +56,26 @@ export default function ControlPanel() {
       setPlayingAs(members.find((member) => member.id === socket.id)?.isWhite ? "white" : "black");
 
       console.log("JOINED ROOM", roomId, "STARTING GAME", members);
+
+      // share profile data with other player
+      socket.emit("share_profile", user);
+    });
+
+    socket.on("share_profile", ({ id, data }: { id: string; data: User }) => {
+      if (id !== socket.id) setOtherUser(data);
     });
   };
 
   useEffect(() => {
-    // socket.on("rooms", (rooms: string[]) => {
-    //   console.log("rooms", rooms);
-    //   if (rooms.length === 0) {
-    //     socket.emit("create", uuid());
-    //   } else {
-    //     socket.emit("join", rooms[0]);
-    //   }
-    // });
+    supabase.auth.getSession().then(({ data }) => {
+      if (data) {
+        setUser(data.session?.user || null);
+      }
+    });
+
+    supabase.auth.onAuthStateChange(async (_, session) => {
+      if (session) setUser(session.user);
+    });
   }, []);
 
   return (
@@ -60,13 +89,19 @@ export default function ControlPanel() {
         {/* <option value="4">Experienced</option> */}
       </select>
 
-      {playing !== "online" && (
-        <button disabled={playing === "searching"} onClick={playOnline} className="mb-5">
+      {playing !== "online" && user && (
+        <Button variant="contained" disabled={playing === "searching"} onClick={playOnline} className="mb-5">
           {playing === "ai" ? "Play Online" : "Please wait, searching for players"}
-        </button>
+        </Button>
       )}
 
-      <button className="mb-5">Resign</button>
+      {!user && (
+        <Button variant="outlined" className="mb-5" onClick={signInWithGoogle}>
+          Sign In with Google
+        </Button>
+      )}
+
+      {otherUser && <Typography>Other User: {otherUser.user_metadata.full_name}</Typography>}
     </section>
   );
 }
