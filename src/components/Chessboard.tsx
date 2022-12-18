@@ -6,8 +6,15 @@ import aiMove from "../aiMove";
 
 // these styles must be imported somewhere
 import { useRecoilState, useRecoilValue } from "recoil";
-import { checkAtom, destsAtom, fenAtom, levelAtom, playingAsAtom, playingAtom } from "../state";
-import { Socket } from "socket.io-client";
+import {
+  checkAtom,
+  checkmateAtom,
+  destsAtom,
+  fenAtom,
+  levelAtom,
+  playingAsAtom,
+  playingAtom,
+} from "../state";
 import { socket } from "./ControlPanel";
 
 export const gameClient = new Chess();
@@ -28,15 +35,26 @@ const fetchDests = (gameClient: Chess) => {
 };
 
 export default function Chessboard() {
-  const boardLength = window.innerHeight - 50;
+  const boardMargin = 40;
+  const boardLength = window.innerHeight - boardMargin;
 
   const [fen, setFen] = useRecoilState(fenAtom);
   const [dests, setDests] = useRecoilState(destsAtom);
   const [check, setCheck] = useRecoilState(checkAtom);
-  const [playingAs, setPlayingAs] = useRecoilState(playingAsAtom);
-  const [playing, setPlaying] = useRecoilState(playingAtom);
 
+  const playing = useRecoilValue(playingAtom);
+  const playingAs = useRecoilValue(playingAsAtom);
   const level = useRecoilValue(levelAtom);
+
+  const [checkmate, setCheckmate] = useRecoilState(checkmateAtom); // signfies if the game is over
+
+  const updateBoardState = (gameClient: Chess) => {
+    setFen(gameClient.fen());
+    setDests(fetchDests(gameClient));
+    setCheck(gameClient.inCheck());
+    setCheckmate(gameClient.isCheckmate());
+    setDests(fetchDests(gameClient));
+  };
 
   const toColor = (gameClient: Chess) => {
     return gameClient.turn() === "w" ? "white" : "black";
@@ -48,9 +66,7 @@ export default function Chessboard() {
       console.log(from, to);
       console.log(gameClient.move({ from: from.toLowerCase(), to: to.toLowerCase() }));
 
-      setFen(gameClient.fen());
-      setCheck(gameClient.inCheck());
-      setDests(fetchDests(gameClient));
+      updateBoardState(gameClient);
     });
 
   const pieceMoved = (from: Key, to: Key, _: any) => {
@@ -58,9 +74,7 @@ export default function Chessboard() {
     fetchDests(gameClient);
 
     // optimistically update fen here
-    setFen(gameClient.fen());
-    setCheck(gameClient.inCheck());
-    setDests(fetchDests(gameClient));
+    updateBoardState(gameClient);
 
     if (playing === "online") socket.emit("move", { from, to });
     else setTimeout(makeAiMove, 1000);
@@ -70,16 +84,12 @@ export default function Chessboard() {
     socket.on("move", ({ from, to }) => {
       gameClient.move({ from, to });
 
-      setFen(gameClient.fen());
-      setCheck(gameClient.inCheck());
-      setDests(fetchDests(gameClient));
+      updateBoardState(gameClient);
     });
   }, []);
 
-  console.log(playing);
-
   return (
-    <section className="flex justify-center items-center px-10 flex-shrink-0">
+    <section className="flex justify-center items-center flex-shrink-0">
       <Chessground
         config={{
           turnColor: toColor(gameClient),

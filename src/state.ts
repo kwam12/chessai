@@ -18,12 +18,17 @@ export const checkAtom = atom<boolean>({
   default: false,
 });
 
+export const checkmateAtom = atom<boolean>({
+  key: "checkmateAtom",
+  default: false,
+});
+
 export const levelAtom = atom<PossibleGameLevel>({
   key: "levelAtom",
   default: 1,
 });
 
-export const playingAtom = atom<"online" | "ai" | "searching">({
+export const playingAtom = atom<"online" | "ai" | "searching" | "standby">({
   key: "playingAtom",
   default: "ai",
 });

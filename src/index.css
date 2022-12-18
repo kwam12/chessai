@@ -4,4 +4,34 @@
 
 * {
   margin: 0px;
+  padding: 0px;
+}
+
+.outlined {
+  @apply border border-blue-500 text-blue-500 font-medium;
+}
+
+.filled {
+  @apply bg-blue-500 text-white font-medium;
+}
+
+.filled-red {
+  @apply bg-red-500 text-white font-medium;
+}
+
+.filled-green {
+  @apply bg-green-500 text-white font-medium;
+}
+
+button:disabled {
+  opacity: 0.5;
+  @apply cursor-wait;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+button {
+  @apply transition-all duration-500 ease-in-out;
 }
