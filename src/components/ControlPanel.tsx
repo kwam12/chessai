@@ -2,8 +2,6 @@ import { User } from "@supabase/supabase-js";
 import { useEffect } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import { io } from "socket.io-client";
-import { v4 as uuid } from "uuid";
-import { PossibleGameLevel } from "../aiMove";
 import { BASE_URL } from "../config";
 import { fenAtom, levelAtom, otherUserAtom, playingAsAtom, playingAtom, userAtom } from "../state";
 import supabase from "../supabase";
@@ -61,6 +59,7 @@ export default function ControlPanel() {
     });
 
     socket.on("share_profile", ({ id, data }: { id: string; data: User }) => {
+      console.log("SET OTHER USER", data);
       if (id !== socket.id) setOtherUser(data);
     });
 
@@ -118,7 +117,7 @@ export default function ControlPanel() {
               } w-full rounded text-lg py-3 mb-3 outline-none`}
               onClick={() => setLevel(0)}
             >
-              Well Trained Monkey
+              Novice
             </button>
 
             <button
@@ -151,9 +150,7 @@ export default function ControlPanel() {
         </section>
       )}
 
-      {playing === "standby" && (
-        <p className="text-gray-500 text-center text-3xl font-bold">Opponent Resigned</p>
-      )}
+      {playing === "standby" && <p className="text-gray-500 text-center text-3xl font-bold">Opponent Quit</p>}
 
       <section>
         {!user && (
@@ -174,7 +171,7 @@ export default function ControlPanel() {
 
         {playing === "online" && (
           <button className="filled-red w-full py-5" onClick={() => (window.location.href = "/")}>
-            RESIGN
+            QUIT
           </button>
         )}
 

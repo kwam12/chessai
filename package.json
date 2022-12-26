@@ -17,6 +17,7 @@
     "react-dom": "^18.2.0",
     "recoil": "^0.7.6",
     "socket.io-client": "^4.5.4",
+    "sweetalert2": "^11.6.16",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

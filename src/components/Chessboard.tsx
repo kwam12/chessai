@@ -1,7 +1,7 @@
 import { Chess, Move, SQUARES } from "chess.js";
 import Chessground from "@react-chess/chessground";
 import { Key } from "../chessground-primitives";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import aiMove from "../aiMove";
 
 // these styles must be imported somewhere
@@ -12,10 +12,13 @@ import {
   destsAtom,
   fenAtom,
   levelAtom,
+  otherUserAtom,
   playingAsAtom,
   playingAtom,
 } from "../state";
 import { socket } from "./ControlPanel";
+import Swal from "sweetalert2";
+import { User } from "@supabase/supabase-js";
 
 export const gameClient = new Chess();
 
@@ -38,15 +41,26 @@ export default function Chessboard() {
   const boardMargin = 40;
   const boardLength = window.innerHeight - boardMargin;
 
+  const otherUserRef = useRef<User | null>(null);
+  const playingAsRef = useRef<"white" | "black" | null>(null);
+
   const [fen, setFen] = useRecoilState(fenAtom);
   const [dests, setDests] = useRecoilState(destsAtom);
   const [check, setCheck] = useRecoilState(checkAtom);
+  const [playing, setPlayingState] = useRecoilState(playingAtom);
 
-  const playing = useRecoilValue(playingAtom);
   const playingAs = useRecoilValue(playingAsAtom);
   const level = useRecoilValue(levelAtom);
+  const otherUser = useRecoilValue(otherUserAtom);
+
+  useEffect(() => {
+    console.log(otherUser);
+  }, [otherUser]);
 
   const [checkmate, setCheckmate] = useRecoilState(checkmateAtom); // signfies if the game is over
+
+  otherUserRef.current = otherUser;
+  playingAsRef.current = playingAs;
 
   const updateBoardState = (gameClient: Chess) => {
     setFen(gameClient.fen());
@@ -54,6 +68,24 @@ export default function Chessboard() {
     setCheck(gameClient.inCheck());
     setCheckmate(gameClient.isCheckmate());
     setDests(fetchDests(gameClient));
+
+    if (gameClient.isCheckmate()) {
+      const winner = gameClient.turn() === "w" ? "black" : "white";
+      const message =
+        winner === playingAsRef.current
+          ? `You won against ${otherUserRef.current ? otherUserRef.current.user_metadata.full_name : "AI"}!`
+          : `You lost against ${otherUserRef.current ? otherUserRef.current.user_metadata.full_name : "AI"}!`;
+
+      Swal.fire({
+        title: "Game Over!",
+        text: message,
+        showConfirmButton: false,
+      });
+
+      setPlayingState("standby");
+
+      if (winner !== playingAsRef.current) socket.emit("gameover");
+    }
   };
 
   const toColor = (gameClient: Chess) => {
