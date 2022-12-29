@@ -1,4 +1,4 @@
-import { Chess, Move, SQUARES } from "chess.js";
+import { Chess, Move, Square, SQUARES } from "chess.js";
 import Chessground from "@react-chess/chessground";
 import { Key } from "../chessground-primitives";
 import { useEffect, useRef } from "react";
@@ -88,6 +88,13 @@ export default function Chessboard() {
     }
   };
 
+  const isPromotion = (moveFrom: Square, moveTo: Square) => {
+    if (gameClient.get(moveFrom).type !== "p") return false;
+
+    const [_, rank] = moveTo.split("");
+    return rank === "8" || rank === "1";
+  };
+
   const toColor = (gameClient: Chess) => {
     return gameClient.turn() === "w" ? "white" : "black";
   };
@@ -96,13 +103,17 @@ export default function Chessboard() {
     aiMove(gameClient.fen(), level).then((move) => {
       const [[from, to]] = Object.entries(move);
       console.log(from, to);
-      console.log(gameClient.move({ from: from.toLowerCase(), to: to.toLowerCase() }));
+      if (isPromotion(from.toLowerCase() as Square, to.toLowerCase() as Square))
+        gameClient.move({ from: from.toLowerCase(), to: to.toLowerCase(), promotion: "q" });
+      else gameClient.move({ from: from.toLowerCase(), to: to.toLowerCase() });
 
       updateBoardState(gameClient);
     });
 
   const pieceMoved = (from: Key, to: Key, _: any) => {
-    gameClient.move({ from, to });
+    if (isPromotion(from as Square, to as Square)) gameClient.move({ from, to, promotion: "q" });
+    else gameClient.move({ from, to });
+
     fetchDests(gameClient);
 
     // optimistically update fen here
@@ -114,7 +125,8 @@ export default function Chessboard() {
 
   useEffect(() => {
     socket.on("move", ({ from, to }) => {
-      gameClient.move({ from, to });
+      if (isPromotion(from, to)) gameClient.move({ from, to, promotion: "q" });
+      else gameClient.move({ from, to });
 
       updateBoardState(gameClient);
     });
