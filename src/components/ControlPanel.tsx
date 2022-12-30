@@ -24,7 +24,7 @@ export default function ControlPanel() {
     // use supabase for signin
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: window.location.href },
+      options: { redirectTo: "https://chessboard0.netlify.app/" },
     });
 
     if (error) {
