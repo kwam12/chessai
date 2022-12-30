@@ -22,7 +22,10 @@ export default function ControlPanel() {
 
   const signInWithGoogle = async () => {
     // use supabase for signin
-    const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.href },
+    });
 
     if (error) {
       console.log(error);
