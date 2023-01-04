@@ -59,6 +59,8 @@ export default function ControlPanel() {
 
       // share profile data with other player
       socket.emit("share_profile", user);
+
+      setInterval(() => socket.emit("PING"), 1000);
     });
 
     socket.on("share_profile", ({ id, data }: { id: string; data: User }) => {
